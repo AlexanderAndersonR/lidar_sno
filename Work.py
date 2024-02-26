@@ -3,93 +3,106 @@
 # from time import sleep
 import threading
 import serial
+import serial.tools.list_ports
 import matplotlib.pyplot as plt
 import math    
+from tkinter import *
+from tkinter.ttk import Combobox  
 # $LDESP,0,0,0,0,180,10,
+
+
+
 x_lim = 10
 y_lim = 10
 step = 10
-def draw():
-    global is_plot
-    while is_plot:
-        plt.figure(1)
-        plt.cla()
-        plt.ylim(-y_lim,y_lim)
-        plt.xlim(-x_lim,x_lim)
-        plt.scatter(x,y,c='r',s=8)
-        plt.pause(1)
-    plt.close("all")
 is_plot = True
 x=[]
 y=[]
 for _ in range(360):
     x.append(0)
     y.append(0)
-# port = input(", к которому подключен лидар:")
-uart = serial.Serial(port = "COM22",baudrate = 115200)
-print((str)(uart.name)+":"+(str)(uart.is_open))
-threading.Thread(target=draw).start()
-if uart.is_open:
-    st = f"$LDESP,0,0,0,0,180,{step},"
-    uart.write(st.encode()) 
-    # 0 угол дальность
-    # uart.write(b"$LDESP,0,0,0,0,180,10,")
-    while uart.is_open:
-        data = uart.readline().decode().strip()
-        # str(data)[index: str(data).find(',', index)]
-        # angle = str(data)[index: str(data).find(' ',)
-        index = str(data).find('\t') + 1
-        # print(index)
-        angle = int(str(data)[index: str(data).find('\t',index)])
-        index = str(data).find('\t', index) + 1
-        dist = int(str(data)[index: len(str(data))])
-        x[angle] = dist * math.cos(math.radians(angle))
-        y[angle] = dist * math.sin(math.radians(angle))
-        if (dist> y_lim) or (dist> x_lim):
-            # print(x_lim)
-            # print(y_lim)
-            # y_lim = dist
-            # x_lim = dist
-            # is_plot = False
-            # threading.Thread(target=draw).start()
-            y_lim = dist
-            x_lim = dist
-            plt.ylim(-y_lim,y_lim)
-            plt.xlim(-x_lim,x_lim)
-        elif (dist < y_lim - 10) and (dist< x_lim-10):
-            flag_mash = True
-            for i in range(0,360):
-                if(y[i]> y[angle]) and (x[i]> x[angle]):
-                    flag_mash = False
-            if flag_mash:
+window = Tk()
+
+
+def draw():
+    global is_plot
+    while is_plot:
+        plt.figtext(0.5, -0.1, "figtext")
+        plt.suptitle("Lidar 2D")
+        plt.figtext(-11,3,"figtext")
+        plt.xlabel("Ось X, см")
+        plt.figtext(-11,-1,"figtext")
+        plt.ylabel("Ось Y, см")
+        plt.ylim(-y_lim,y_lim)
+        plt.xlim(-x_lim,x_lim)
+        plt.scatter(x,y,c='r',s=10)
+        plt.pause(0.1)
+        plt.cla()
+    plt.close("all")
+# def clicked_():
+#     threading.Thread(target=clicked).start()
+def clicked():
+    global y_lim
+    global x_lim
+    global combo
+    # window.quit()
+    window.destroy()
+    syka = combo.get()
+    print("-------------------------------")
+    print(syka)
+    print("-------------------------------")
+    uart = serial.Serial(port = "COM3" ,baudrate = 115200)
+    uart
+    # print((str)(uart.name)+":"+(str)(uart.is_open))
+    threading.Thread(target=draw).start()
+    if uart.is_open:
+        st = f"$LDESP,0,0,0,0,180,{step},"
+        # st = f"$LDESP,0,0,0,0,0,0,"
+        uart.write(st.encode()) 
+        while uart.is_open:
+            data = uart.readline().decode().strip()
+            index = str(data).find('\t') + 1
+            angle = int(str(data)[index: str(data).find('\t',index)])
+            index = str(data).find('\t', index) + 1
+            dist = int(str(data)[index: len(str(data))])
+            x[angle] = dist * math.cos(math.radians(angle))
+            y[angle] = dist * math.sin(math.radians(angle))
+            if (dist> y_lim) or (dist> x_lim):
                 y_lim = dist
                 x_lim = dist
                 plt.ylim(-y_lim,y_lim)
                 plt.xlim(-x_lim,x_lim)
-       
-        
-        # is_plot = False
-        # print(x)
-        # print(y)
-        # print(angle)
-        # print(dist)
-        # data =str(data)
-        # print(data)
-is_plot = False
-# Obj = ...
-# if (Obj.connect()):
-#     print(Obj.GetDeviceInfo())
-#     gen = Obj.StartScanning()
-#     t = time.time()
-#     while (time.time()-t)<30:
-#         print(next(gen))
-#         time.sleep(0.5)
-#     Obj.StopScanning()
-#     Obj.Disconnect()
-# else:
-#     print("Ошибка подключения устройства")
-#     print("23",chr(176),sep="")
+            elif (dist < y_lim - 10) and (dist< x_lim-10):
+                flag_mash = True
+                for i in range(0,360):
+                    if(y[i]> y[angle]) and (x[i]> x[angle]):
+                        flag_mash = False
+                if flag_mash:
+                    y_lim = dist
+                    x_lim = dist
+                    plt.ylim(-y_lim,y_lim)
+                    plt.xlim(-x_lim,x_lim)
+    is_plot = False
+def update():
+    global combo
+    ports = serial.tools.list_ports.comports()
+    ports2=[]
+    for port, desc, hwid in sorted(ports):
+        ports2.append(port)
+    combo['values'] = ports2
 
-
-
-# line = ser.readline().decode().strip()
+window.title("Lidar 2D")
+window.geometry('400x250')
+btn = Button(window, text = "Start", command= clicked)
+btn.grid(column =1,row=0)
+btn = Button(window, text = "Обновить", command= update)
+btn.grid(column =3,row=0)
+combo = Combobox(window)  
+ports = serial.tools.list_ports.comports()
+ports2=[]
+for port, desc, hwid in sorted(ports):
+    ports2.append(port)
+combo['values'] = ports2
+combo.current(1)  # установите вариант по умолчанию  
+combo.grid(column=0, row=0)  
+window.mainloop()

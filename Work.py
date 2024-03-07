@@ -1,17 +1,12 @@
-
-# import time
-# from time import sleep
 import threading
 import serial
 import serial.tools.list_ports
 import matplotlib.pyplot as plt
 import math    
+import tkinter as tk
 from tkinter import *
 from tkinter.ttk import Combobox  
-# $LDESP,0,0,0,0,180,10,
-
-
-
+from tkinter.messagebox import showerror, showwarning, showinfo
 x_lim = 10
 y_lim = 10
 step = 10
@@ -22,8 +17,6 @@ for _ in range(360):
     x.append(0)
     y.append(0)
 window = Tk()
-
-
 def draw():
     global is_plot
     while is_plot:
@@ -44,45 +37,44 @@ def draw():
 def clicked():
     global y_lim
     global x_lim
-    global combo
+    global var_combobox
     # window.quit()
-    window.destroy()
-    syka = combo.get()
-    print("-------------------------------")
-    print(syka)
-    print("-------------------------------")
-    uart = serial.Serial(port = "COM3" ,baudrate = 115200)
-    uart
-    # print((str)(uart.name)+":"+(str)(uart.is_open))
-    threading.Thread(target=draw).start()
-    if uart.is_open:
-        st = f"$LDESP,0,0,0,0,180,{step},"
-        # st = f"$LDESP,0,0,0,0,0,0,"
-        uart.write(st.encode()) 
-        while uart.is_open:
-            data = uart.readline().decode().strip()
-            index = str(data).find('\t') + 1
-            angle = int(str(data)[index: str(data).find('\t',index)])
-            index = str(data).find('\t', index) + 1
-            dist = int(str(data)[index: len(str(data))])
-            x[angle] = dist * math.cos(math.radians(angle))
-            y[angle] = dist * math.sin(math.radians(angle))
-            if (dist> y_lim) or (dist> x_lim):
-                y_lim = dist
-                x_lim = dist
-                plt.ylim(-y_lim,y_lim)
-                plt.xlim(-x_lim,x_lim)
-            elif (dist < y_lim - 10) and (dist< x_lim-10):
-                flag_mash = True
-                for i in range(0,360):
-                    if(y[i]> y[angle]) and (x[i]> x[angle]):
-                        flag_mash = False
-                if flag_mash:
+    try:
+        uart = serial.Serial(port = var_combobox.get() ,baudrate = 115200)
+        # print((str)(uart.name)+":"+(str)(uart.is_open))
+        # window.destroy()
+        threading.Thread(target=draw).start()
+        if uart.is_open:
+            st = f"$LDESP,0,0,0,0,180,{step},"
+            # st = f"$LDESP,0,0,0,0,0,0,"
+            uart.write(st.encode()) 
+            while uart.is_open:
+                data = uart.readline().decode().strip()
+                index = str(data).find('\t') + 1
+                angle = int(str(data)[index: str(data).find('\t',index)])
+                index = str(data).find('\t', index) + 1
+                dist = int(str(data)[index: len(str(data))])
+                x[angle] = dist * math.cos(math.radians(angle))
+                y[angle] = dist * math.sin(math.radians(angle))
+                if (dist> y_lim) or (dist> x_lim):
                     y_lim = dist
                     x_lim = dist
                     plt.ylim(-y_lim,y_lim)
                     plt.xlim(-x_lim,x_lim)
-    is_plot = False
+                elif (dist < y_lim - 10) and (dist< x_lim-10):
+                    flag_mash = True
+                    for i in range(0,360):
+                        if(y[i]> y[angle]) and (x[i]> x[angle]):
+                            flag_mash = False
+                    if flag_mash:
+                        y_lim = dist
+                        x_lim = dist
+                        plt.ylim(-y_lim,y_lim)
+                        plt.xlim(-x_lim,x_lim)
+        is_plot = False
+    except:
+        showerror(title="Ошибка", message="Сообщение об ошибке")
+        # start_form()
 def update():
     global combo
     ports = serial.tools.list_ports.comports()
@@ -90,19 +82,24 @@ def update():
     for port, desc, hwid in sorted(ports):
         ports2.append(port)
     combo['values'] = ports2
-
-window.title("Lidar 2D")
-window.geometry('400x250')
-btn = Button(window, text = "Start", command= clicked)
-btn.grid(column =1,row=0)
-btn = Button(window, text = "Обновить", command= update)
-btn.grid(column =3,row=0)
-combo = Combobox(window)  
-ports = serial.tools.list_ports.comports()
-ports2=[]
-for port, desc, hwid in sorted(ports):
-    ports2.append(port)
-combo['values'] = ports2
-combo.current(1)  # установите вариант по умолчанию  
-combo.grid(column=0, row=0)  
-window.mainloop()
+def start_form():
+    global var_combobox
+    global combo
+    window.title("Lidar 2D")
+    window.geometry('250x30')
+    var_combobox = tk.StringVar()
+    btn = Button(window, text = "Start", command= clicked)
+    btn.grid(column =1,row=0)
+    btn = Button(window, text = "Обновить", command= update)
+    btn.grid(column =3,row=0)
+    combo = Combobox(window)  
+    ports = serial.tools.list_ports.comports()
+    ports2=[]
+    for port, desc, hwid in sorted(ports):
+        ports2.append(port)
+    combo['values'] = ports2
+    combo['textvariable'] = var_combobox
+    combo.current(1)  # установите вариант по умолчанию  
+    combo.grid(column=0, row=0)  
+    window.mainloop()
+start_form()

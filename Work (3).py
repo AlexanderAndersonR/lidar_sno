@@ -138,7 +138,7 @@ def stop():
 
     
 window.title("Lidar 2D")
-window.geometry('400x250')
+window.geometry('320x15')
 btn = Button(window, text = "Start", command= clicked_)
 btn.grid(column =1,row=0)
 btn_pause = Button(window, text = "Pause", command = pause)

@@ -1,7 +1,12 @@
-$LDESP,0,0,0,0,180,10,1,
+$LDESP,0,0,0,0,180,10,0,
 $LDESP,STOP,
 $LDESP,START,
 $LDESP,SAVE,
 $LDESP,SETTINGS,
 $LDESP,RESTART_ESP,
 Скорость вращения: 60° за 0,12 сек (180° за 0,36 сек)
+180
+2
+
+
+$LDESP,0,50,5,0,180,10,0,

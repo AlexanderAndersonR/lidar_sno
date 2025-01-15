@@ -1,6 +1,7 @@
 #include <AmperkaServo.h>
 #include <EEPROM.h>
 #define HEADER 0x59
+#define dalay_count 10 // по документации 2 но лучше ставить 3
 unsigned int Dpoe;
 int posVert = 0;  //объявлляем переменные
 int deltVert = 10;
@@ -83,13 +84,30 @@ void ServoHor() {
   if (posHor + deltHor > maxHor) {
     posHor = minHor;
     servo1.writeAngle(posHor);
-    delay(500);
-    if (repeat_indicator)
+    delay(200);
+    if (posVert + deltVert <= maxVert && maxVert != 0) {
+      posVert += deltVert;
+      servo.writeAngle(posVert);
+      // flagServo1 = true;
+      // Serial.print("FLAG\t");
+      // Serial.print(posVert);
+      // Serial.print("\t");
+      // Serial.print(maxVert);
+      // Serial.print("\t");
+      // Serial.println(deltVert);
+      delay(deltVert * dalay_count);
       Serial2.write(trigData, 4);
+    } else if (posVert + deltVert > maxVert) {
+      posVert = minVert;
+      servo.writeAngle(posVert);
+      delay(deltVert * dalay_count);
+    }
+    // if (repeat_indicator)
+    //   Serial2.write(trigData, 4);
   } else {
     posHor += deltHor;
     servo1.writeAngle(posHor);
-    delay(500);
+    delay(deltHor * dalay_count);  //2
     Serial2.write(trigData, 4);
   }
 }
